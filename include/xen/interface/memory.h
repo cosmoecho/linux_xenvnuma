@@ -60,7 +60,7 @@ DEFINE_GUEST_HANDLE_STRUCT(xen_memory_reservation);
  * Returns zero on complete success, otherwise a negative error code.
  * On complete success then always @nr_exchanged == @in.nr_extents.
  * On partial success @nr_exchanged indicates how much work was done.
- */
+*/
 #define XENMEM_exchange             11
 struct xen_memory_exchange {
     /*
@@ -262,5 +262,67 @@ struct xen_remove_from_physmap {
     xen_pfn_t gpfn;
 };
 DEFINE_GUEST_HANDLE_STRUCT(xen_remove_from_physmap);
+
+/* vNUMA structures */
+struct vmemrange {
+	uint64_t start, end;
+	/* reserved */
+	uint64_t _reserved;
+};
+DEFINE_GUEST_HANDLE_STRUCT(vmemrange);
+
+struct vnuma_topology_info {
+	/* OUT */
+	domid_t domid;
+	/*
+	 * nr_nodes and nr_cpus are used for retreival of sizes
+	 * of will be allocated arrays for vnuma topology.
+	 * We need to know vcpus numberfor domain as NR_CPUS
+	 * is less then domain max_vcpus, number of possible
+	 * cpus will equal to NR_CPUS and we have no way of
+	 * learning domain vcpus number.
+	 */
+	/* number of virtual numa nodes */
+	union {
+		GUEST_HANDLE(uint h);
+		uint64_t	_pad;
+	} nr_nodes;
+	/* number of virtual cpus */
+	union {
+		GUEST_HANDLE(uint) h;
+		uint64_t    _pad;
+	} nr_cpus;
+	/* distance table */
+	union {
+		GUEST_HANDLE(uint) h;
+		uint64_t    _pad;
+	} distance;
+	/* cpu mapping to vnodes */
+	union {
+		GUEST_HANDLE(uint) h;
+		uint64_t    _pad;
+	} cpu_to_node;
+	/*
+	* memory areas constructed by Xen, start and end
+	* of the ranges are specific to domain e820 map.
+	* Xen toolstack constructs these ranges for domain
+	* when building it.
+	*/
+	union {
+		GUEST_HANDLE(vmemrange) h;
+		uint64_t    _pad;
+	} memrange;
+};
+DEFINE_GUEST_HANDLE_STRUCT(vnuma_topology_info);
+
+/*
+ * Used to retreive vnuma topology info.
+ * Use XENMEM_get_vnuma_nodes to obtain number of
+ * nodes before allocating memory for topology.
+ */
+#define XENMEM_get_vnuma_info	25
+
+/* Used to pre-retreive number of vnodes */
+#define XENMEM_get_vnodes_vcpus  26
 
 #endif /* __XEN_PUBLIC_MEMORY_H__ */

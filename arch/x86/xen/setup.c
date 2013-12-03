@@ -20,6 +20,7 @@
 #include <asm/numa.h>
 #include <asm/xen/hypervisor.h>
 #include <asm/xen/hypercall.h>
+#include <asm/xen/vnuma.h>
 
 #include <xen/xen.h>
 #include <xen/page.h>
@@ -598,6 +599,9 @@ void __init xen_arch_setup(void)
 	WARN_ON(xen_set_default_idle());
 	fiddle_vdso();
 #ifdef CONFIG_NUMA
-	numa_off = 1;
+	if (!xen_initial_domain())
+		numa_off = 0;
+	else
+		numa_off = 1;
 #endif
 }
